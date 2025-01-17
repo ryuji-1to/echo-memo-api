@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewRouter(uc controller.IUserController, tc controller.ITaskController) *echo.Echo {
+func NewRouter(uc controller.IUserController, mc controller.IMemoController) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:3000", os.Getenv("FE_URL")},
@@ -18,13 +18,17 @@ func NewRouter(uc controller.IUserController, tc controller.ITaskController) *ec
 		AllowMethods:     []string{"GET", "PUT", "POST", "DELETE"},
 		AllowCredentials: true,
 	}))
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+
+	csrfConfig := middleware.CSRFConfig{
 		CookiePath:     "/",
 		CookieDomain:   os.Getenv("API_DOMAIN"),
 		CookieHTTPOnly: true,
-		// CookieSameSite: http.SameSiteDefaultMode,
 		CookieSameSite: http.SameSiteNoneMode,
-	}))
+	}
+	if os.Getenv("GO_ENV") == "dev" {
+		csrfConfig.CookieSameSite = http.SameSiteDefaultMode
+	}
+	e.Use(middleware.CSRFWithConfig(csrfConfig))
 
 	e.GET("/status", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, "ok")
@@ -35,15 +39,15 @@ func NewRouter(uc controller.IUserController, tc controller.ITaskController) *ec
 	e.POST("/logout", uc.Logout)
 	e.GET("/csrf", uc.CsrfToken)
 
-	t := e.Group("/tasks")
+	t := e.Group("/memos")
 	t.Use(echojwt.WithConfig(echojwt.Config{
 		SigningKey:  []byte(os.Getenv("SECRET")),
 		TokenLookup: "cookie:token",
 	}))
-	t.GET("", tc.GetAllTasks)
-	t.GET("/:taskId", tc.GetTaskById)
-	t.POST("", tc.CreateTask)
-	t.PUT("/:taskId", tc.UpdateTask)
-	t.DELETE("/:taskId", tc.DeleteTask)
+	t.GET("", mc.GetAllMemos)
+	t.GET("/:memoId", mc.GetMemoById)
+	t.POST("", mc.CreateMemo)
+	t.PUT("/:memoId", mc.UpdateMemo)
+	t.DELETE("/:memoId", mc.DeleteMemo)
 	return e
 }

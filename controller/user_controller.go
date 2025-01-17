@@ -53,8 +53,12 @@ func (uc *userController) Login(c echo.Context) error {
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	cookie.HttpOnly = true
-	cookie.Secure = true
-	cookie.SameSite = http.SameSiteNoneMode
+	if os.Getenv("GO_ENV") == "production" {
+		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	} else {
+		cookie.SameSite = http.SameSiteDefaultMode
+	}
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
 }
@@ -67,8 +71,12 @@ func (uc *userController) Logout(c echo.Context) error {
 	cookie.Path = "/"
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	cookie.HttpOnly = true
-	cookie.Secure = true
-	cookie.SameSite = http.SameSiteNoneMode
+	if os.Getenv("GO_ENV") == "production" {
+		cookie.Secure = true
+		cookie.SameSite = http.SameSiteNoneMode
+	} else {
+		cookie.SameSite = http.SameSiteDefaultMode
+	}
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
 }
