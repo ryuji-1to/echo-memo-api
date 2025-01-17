@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	db := db.NewDB()
+	db := db.SetupDB()
 	userRepository := repository.NewUserRepository(db)
 	userValidator := validator.NewUserValidator()
 	userUsecase := usecase.NewUserUsecase(userRepository, userValidator)

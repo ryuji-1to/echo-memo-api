@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	dbConnect := db.NewDB()
+	dbConnect := db.SetupDB()
 	defer fmt.Println("Successfully Migrated")
 	defer db.CloseDB(dbConnect)
 	dbConnect.AutoMigrate(&model.User{}, &model.Memo{})
