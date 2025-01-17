@@ -12,6 +12,10 @@ import (
 
 func NewRouter(uc controller.IUserController, mc controller.IMemoController) *echo.Echo {
 	e := echo.New()
+	e.GET("/status", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, "ok")
+	})
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:3000", os.Getenv("FE_URL")},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowHeaders, echo.HeaderXCSRFToken},
@@ -19,20 +23,16 @@ func NewRouter(uc controller.IUserController, mc controller.IMemoController) *ec
 		AllowCredentials: true,
 	}))
 
-	csrfConfig := middleware.CSRFConfig{
+	config := middleware.CSRFConfig{
 		CookiePath:     "/",
 		CookieDomain:   os.Getenv("API_DOMAIN"),
 		CookieHTTPOnly: true,
 		CookieSameSite: http.SameSiteNoneMode,
 	}
-	if os.Getenv("GO_ENV") == "dev" {
-		csrfConfig.CookieSameSite = http.SameSiteDefaultMode
+	if os.Getenv("GO_ENV") != "production" {
+		config.CookieSameSite = http.SameSiteDefaultMode
 	}
-	e.Use(middleware.CSRFWithConfig(csrfConfig))
-
-	e.GET("/status", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, "ok")
-	})
+	e.Use(middleware.CSRFWithConfig(config))
 
 	e.POST("/signup", uc.SignUp)
 	e.POST("/login", uc.Login)
