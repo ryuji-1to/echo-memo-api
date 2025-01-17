@@ -25,14 +25,14 @@ func NewMemoRepository(db *gorm.DB) IMemoRepository {
 }
 
 func (mr *memoRepository) GetAllMemos(memos *[]model.Memo, userId uint) error {
-	if err := mr.db.Joins("User").Where("user_id = ?", userId).Order("created_at").Find(memos).Error; err != nil {
+	if err := mr.db.Joins("User").Where("user_id = ?", userId).Order("memos.created_at").Find(memos).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 func (mr *memoRepository) GetMemoById(memo *model.Memo, userId uint, memoId uint) error {
-	if err := mr.db.Joins("User").Where("user_id = ?", userId).First(memo, memo).Error; err != nil {
+	if err := mr.db.Joins("User").Where("user_id = ? AND memos.id = ?", userId, memoId).First(memo, memo).Error; err != nil {
 		return err
 	}
 	return nil
