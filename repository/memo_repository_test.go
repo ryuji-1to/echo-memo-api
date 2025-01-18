@@ -88,7 +88,6 @@ func TestDeleteMemo(t *testing.T) {
 	)
 	err := repository.DeleteMemo(userId, memoId)
 	assert.Equal(t, nil, err)
-
 	err = repository.DeleteMemo(userId, memoId)
 	assert.Equal(t, "object does not exist", err.Error())
 }
