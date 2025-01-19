@@ -5,6 +5,7 @@ import (
 	"echo-rest-api/model"
 	"echo-rest-api/usecase"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,9 +39,8 @@ func TestGetAllMemos(t *testing.T) {
 		Return(memoResponse, nil)
 	controller := NewMemoController(mockUsecase)
 
-	err := controller.GetAllMemos(mockContext)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, mockContext.Response().Status)
+	controller.GetAllMemos(mockContext)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
 	memoJSON, err := json.Marshal(memoResponse)
 	assert.Nil(t, err)
@@ -48,7 +48,20 @@ func TestGetAllMemos(t *testing.T) {
 	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
 }
 
-func TestGetAllMemos_Error(t *testing.T) {}
+func TestGetAllMemos_Error(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/memos", nil)
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("GetAllMemos", uint(1)).
+		Return(nil, errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.GetAllMemos(mockContext)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
+}
 
 func TestGetMemoById(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/memos/1", nil)
@@ -68,16 +81,32 @@ func TestGetMemoById(t *testing.T) {
 		Return(memoResponse, nil)
 	controller := NewMemoController(mockUsecase)
 
-	err := controller.GetMemoById(mockContext)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, mockContext.Response().Status)
+	controller.GetMemoById(mockContext)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
 	memoJSON, err := json.Marshal(memoResponse)
 	assert.Nil(t, err)
 	assert.JSONEq(t, string(memoJSON), rec.Body.String())
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
 }
 
-func TestGetMemoById_Error(t *testing.T) {}
+func TestGetMemoById_Error(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/memos/1", nil)
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockContext.SetPath("/memos/:memoId")
+	mockContext.SetParamNames("memoId")
+	mockContext.SetParamValues("1")
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("GetMemoById", uint(1), uint(1)).
+		Return(nil, errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.GetMemoById(mockContext)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
+}
 
 func TestCreateMemo(t *testing.T) {
 	input := model.Memo{
@@ -86,7 +115,7 @@ func TestCreateMemo(t *testing.T) {
 	}
 	inputJSON, err := json.Marshal(input)
 	assert.Nil(t, err)
-	req := httptest.NewRequest(http.MethodPost, "/memos/1", bytes.NewBuffer(inputJSON))
+	req := httptest.NewRequest(http.MethodPost, "/memos", bytes.NewBuffer(inputJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	mockContext := createMockContext(req, rec)
@@ -95,9 +124,9 @@ func TestCreateMemo(t *testing.T) {
 		On("CreateMemo", mock.Anything).
 		Return(nil)
 	controller := NewMemoController(mockUsecase)
-	err = controller.CreateMemo(mockContext)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusCreated, mockContext.Response().Status)
+
+	controller.CreateMemo(mockContext)
+	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	memoJSON, err := json.Marshal(model.MemoResponse{
 		ID:        input.ID,
@@ -108,9 +137,52 @@ func TestCreateMemo(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.JSONEq(t, string(memoJSON), rec.Body.String())
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
 }
 
-func TestCreateMemo_Error(t *testing.T) {}
+func TestCreateMemo_Error(t *testing.T) {
+	input := model.Memo{
+		Title:   "created memo",
+		Content: "created memo",
+	}
+	inputJSON, err := json.Marshal(input)
+	assert.Nil(t, err)
+	req := httptest.NewRequest(http.MethodPost, "/memos", bytes.NewBuffer(inputJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("CreateMemo", mock.Anything).
+		Return(errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.CreateMemo(mockContext)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
+}
+
+func TestCreateMemo_BadRequest(t *testing.T) {
+	input := model.Memo{
+		Title:   "created memo",
+		Content: "created memo",
+	}
+	inputJSON, err := json.Marshal(input)
+	assert.Nil(t, err)
+	// headerを付与しないので400になる
+	req := httptest.NewRequest(http.MethodPost, "/memos", bytes.NewBuffer(inputJSON))
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("CreateMemo", mock.Anything).
+		Return(errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.CreateMemo(mockContext)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertNotCalled(t, "CreateMemo")
+}
 
 func TestUpdateMemo(t *testing.T) {
 	input := model.Memo{
@@ -131,9 +203,9 @@ func TestUpdateMemo(t *testing.T) {
 		On("UpdateMemo", mock.AnythingOfType("model.Memo"), uint(1), uint(1)).
 		Return(nil)
 	controller := NewMemoController(mockUsecase)
-	err = controller.UpdateMemo(mockContext)
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, mockContext.Response().Status)
+
+	controller.UpdateMemo(mockContext)
+	assert.Equal(t, http.StatusOK, rec.Code)
 
 	memoJSON, err := json.Marshal(model.MemoResponse{
 		ID:        input.ID,
@@ -144,9 +216,58 @@ func TestUpdateMemo(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.JSONEq(t, string(memoJSON), rec.Body.String())
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
 }
 
-func TestUpdateMemo_Error(t *testing.T) {}
+func TestUpdateMemo_Error(t *testing.T) {
+	input := model.Memo{
+		Title:   "updated memo",
+		Content: "updated memo",
+	}
+	inputJSON, err := json.Marshal(input)
+	assert.Nil(t, err)
+	req := httptest.NewRequest(http.MethodPut, "/memos/1", bytes.NewBuffer(inputJSON))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockContext.SetPath("/memos/:memoId")
+	mockContext.SetParamNames("memoId")
+	mockContext.SetParamValues("1")
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("UpdateMemo", mock.AnythingOfType("model.Memo"), uint(1), uint(1)).
+		Return(errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.UpdateMemo(mockContext)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
+}
+
+func TestUpdateMemo_BadRequest(t *testing.T) {
+	input := model.Memo{
+		Title:   "updated memo",
+		Content: "updated memo",
+	}
+	inputJSON, err := json.Marshal(input)
+	assert.Nil(t, err)
+	// headerを付与しないので400エラー
+	req := httptest.NewRequest(http.MethodPut, "/memos/1", bytes.NewBuffer(inputJSON))
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockContext.SetPath("/memos/:memoId")
+	mockContext.SetParamNames("memoId")
+	mockContext.SetParamValues("1")
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("UpdateMemo", mock.AnythingOfType("model.Memo"), uint(1), uint(1)).
+		Return(errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.UpdateMemo(mockContext)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertNotCalled(t, "UpdateMemo")
+}
 
 func TestDeleteMemo(t *testing.T) {
 	req := httptest.NewRequest(http.MethodDelete, "/memos/1", nil)
@@ -160,13 +281,29 @@ func TestDeleteMemo(t *testing.T) {
 		On("DeleteMemo", uint(1), uint(1)).
 		Return(nil)
 	controller := NewMemoController(mockUsecase)
-	err := controller.DeleteMemo(mockContext)
 
-	assert.Nil(t, err)
-	assert.Equal(t, http.StatusNoContent, mockContext.Response().Status)
+	controller.DeleteMemo(mockContext)
+	assert.Equal(t, http.StatusNoContent, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
 }
 
-func TestDeleteMemo_Error(t *testing.T) {}
+func TestDeleteMemo_Error(t *testing.T) {
+	req := httptest.NewRequest(http.MethodDelete, "/memos/1", nil)
+	rec := httptest.NewRecorder()
+	mockContext := createMockContext(req, rec)
+	mockContext.SetPath("/memos/:memoId")
+	mockContext.SetParamNames("memoId")
+	mockContext.SetParamValues("1")
+	mockUsecase := newMockMemoUsecase()
+	mockUsecase.(*mockMemoUsecase).
+		On("DeleteMemo", uint(1), uint(1)).
+		Return(errors.New("error"))
+	controller := NewMemoController(mockUsecase)
+
+	controller.DeleteMemo(mockContext)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	mockUsecase.(*mockMemoUsecase).AssertExpectations(t)
+}
 
 func createMockContext(req *http.Request, rec *httptest.ResponseRecorder) echo.Context {
 	e := echo.New()
