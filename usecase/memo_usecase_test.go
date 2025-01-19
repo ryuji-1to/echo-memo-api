@@ -153,6 +153,7 @@ func TestUpdateMemo(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, mockMemo.Title, memo.Title)
 	assert.Equal(t, mockMemo.Content, memo.Content)
+	mockRepository.(*mockMemoRepository).AssertExpectations(t)
 }
 
 func TestUpdateMemo_Error(t *testing.T) {
@@ -160,14 +161,23 @@ func TestUpdateMemo_Error(t *testing.T) {
 		userId = uint(1)
 		memoId = uint(1)
 	)
+	mockMemo := model.Memo{
+		Model: gorm.Model{
+			ID: memoId,
+		},
+		Title:   "updated mock memo1 title",
+		Content: "updated mock memo1 content",
+		UserId:  userId,
+	}
 	mockRepository := newMockMemoRepository()
 	mockRepository.(*mockMemoRepository).On("UpdateMemo", mock.Anything, userId, memoId).Return(nil, errors.New("error"))
 
 	validator := validator.NewMemoValidator()
 	usecase := NewMemoUsecase(mockRepository, validator)
-	memo, err := usecase.UpdateMemo(model.Memo{}, userId, memoId)
+	memo, err := usecase.UpdateMemo(mockMemo, userId, memoId)
 	assert.Equal(t, model.MemoResponse{}, memo)
 	assert.Error(t, err)
+	mockRepository.(*mockMemoRepository).AssertExpectations(t)
 }
 
 func TestUpdateMemo_Validate(t *testing.T) {
@@ -200,6 +210,7 @@ func TestDeleteMemo(t *testing.T) {
 
 	err := usecase.DeleteMemo(userId, memoId)
 	assert.Nil(t, err)
+	mockRepository.(*mockMemoRepository).AssertExpectations(t)
 }
 
 func TestDeleteMemo_Error(t *testing.T) {
@@ -209,6 +220,7 @@ func TestDeleteMemo_Error(t *testing.T) {
 	usecase := NewMemoUsecase(mockRepository, nil)
 	err := usecase.DeleteMemo(1, 1)
 	assert.Error(t, err)
+	mockRepository.(*mockMemoRepository).AssertExpectations(t)
 }
 
 type mockMemoRepository struct {

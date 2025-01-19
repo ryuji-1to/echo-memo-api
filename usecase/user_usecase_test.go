@@ -26,6 +26,7 @@ func TestSignUp(t *testing.T) {
 	user, err := usecase.SignUp(mockUser)
 	assert.Nil(t, err)
 	assert.Equal(t, user.Email, mockUser.Email)
+	mockRepository.(*mockUserRepository).AssertExpectations(t)
 }
 
 func TestSignUp_Error(t *testing.T) {
@@ -41,6 +42,7 @@ func TestSignUp_Error(t *testing.T) {
 	user, err := usecase.SignUp(mockUser)
 	assert.Error(t, err)
 	assert.Equal(t, model.UserResponse{}, user)
+	mockRepository.(*mockUserRepository).AssertExpectations(t)
 }
 
 func TestSignUp_Validate(t *testing.T) {
@@ -88,6 +90,7 @@ func TestSignUp_Validate(t *testing.T) {
 	user, err = usecase.SignUp(mockUser)
 	assert.Equal(t, "password: limited min 6 max 30 char.", err.Error())
 	assert.Equal(t, model.UserResponse{}, user)
+	mockRepository.(*mockUserRepository).AssertNotCalled(t, "CreateUser")
 }
 
 func TestLogin(t *testing.T) {
@@ -106,6 +109,7 @@ func TestLogin(t *testing.T) {
 	token, err := usecase.Login(mockUser)
 	assert.NotEmpty(t, token)
 	assert.Nil(t, err)
+	mockRepository.(*mockUserRepository).AssertExpectations(t)
 }
 
 func TestLogin_Error(t *testing.T) {
@@ -121,6 +125,7 @@ func TestLogin_Error(t *testing.T) {
 	token, err := usecase.Login(mockUser)
 	assert.Empty(t, token)
 	assert.Error(t, err)
+	mockRepository.(*mockUserRepository).AssertExpectations(t)
 }
 
 func TestLogin_Validate(t *testing.T) {
