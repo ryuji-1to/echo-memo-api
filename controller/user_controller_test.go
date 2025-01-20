@@ -107,9 +107,8 @@ func TestLogin(t *testing.T) {
 	controller := NewUserController(usecase)
 	controller.Login(mockContext)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	// cookie, err := mockContext.Cookie("token")
-	// assert.Nil(t, err)
-	// assert.Equal(t, token, cookie.Value)
+	cookie := rec.Header().Get("Set-Cookie")
+	assert.Contains(t, cookie, "token="+token)
 	usecase.(*mockUserUsecase).AssertExpectations(t)
 }
 
@@ -132,9 +131,6 @@ func TestLogin_Error(t *testing.T) {
 	controller.Login(mockContext)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	assert.Equal(t, "\"error\"\n", rec.Body.String())
-	// cookie, err := mockContext.Cookie("token")
-	// assert.Nil(t, err)
-	// assert.Equal(t, token, cookie.Value)
 	usecase.(*mockUserUsecase).AssertExpectations(t)
 }
 
@@ -156,9 +152,6 @@ func TestLogin_BadRequest(t *testing.T) {
 	controller := NewUserController(usecase)
 	controller.Login(mockContext)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	// cookie, err := mockContext.Cookie("token")
-	// assert.Nil(t, err)
-	// assert.Equal(t, token, cookie.Value)
 	usecase.(*mockUserUsecase).AssertNotCalled(t, "Login")
 }
 
@@ -166,10 +159,11 @@ func TestLogout(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
 	rec := httptest.NewRecorder()
 	mockContext := createMockContext(req, rec)
-	// TODO: set cookie
 	userController := NewUserController(nil)
 	userController.Logout(mockContext)
 	assert.Equal(t, http.StatusOK, rec.Code)
+	token := rec.Header().Get("Set-Cookie")
+	assert.Contains(t, token, "token=")
 }
 
 func TestCsrfToken(t *testing.T) {
