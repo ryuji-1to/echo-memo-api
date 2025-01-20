@@ -3,7 +3,6 @@ package controller
 import (
 	"bytes"
 	"echo-rest-api/model"
-	"echo-rest-api/usecase"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -176,32 +175,4 @@ func TestCsrfToken(t *testing.T) {
 	csrf, err := json.Marshal(echo.Map{"csrf_token": "test_csrf_token"})
 	assert.Nil(t, err)
 	assert.JSONEq(t, string(csrf), rec.Body.String())
-}
-
-type mockUserUsecase struct {
-	mock.Mock
-}
-
-func newMockUserUsecase() usecase.IUserUsecase {
-	return &mockUserUsecase{}
-}
-
-func (m *mockUserUsecase) Login(user model.User) (string, error) {
-	args := m.Called(user)
-	if tokenArg, ok := args.Get(0).(string); ok && tokenArg != "" {
-		return tokenArg, nil
-	}
-	return "", args.Error(1)
-}
-
-func (m *mockUserUsecase) SignUp(user model.User) (model.UserResponse, error) {
-	args := m.Called(user)
-	if userArg, ok := args.Get(0).(model.UserResponse); ok {
-		resUser := model.UserResponse{
-			ID:    userArg.ID,
-			Email: userArg.Email,
-		}
-		return resUser, nil
-	}
-	return model.UserResponse{}, args.Error(1)
 }

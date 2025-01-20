@@ -2,14 +2,12 @@ package usecase
 
 import (
 	"echo-rest-api/model"
-	"echo-rest-api/repository"
 	"echo-rest-api/validator"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -171,27 +169,4 @@ func TestLogin_Validate(t *testing.T) {
 	token, err = usecase.Login(mockUser)
 	assert.Equal(t, "password: limited min 6 max 30 char.", err.Error())
 	assert.Empty(t, token)
-}
-
-type mockUserRepository struct {
-	mock.Mock
-}
-
-func newMockUserRepository() repository.IUserRepository {
-	return &mockUserRepository{}
-}
-
-func (m *mockUserRepository) CreateUser(user *model.User) error {
-	args := m.Called(user)
-	return args.Error(0)
-}
-
-func (m *mockUserRepository) GetUserByEmail(user *model.User, email string) error {
-	args := m.Called(user, email)
-	if userArg, ok := args.Get(0).(*model.User); ok && userArg != nil {
-		*user = *userArg
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-		(*user).Password = string(hashedPassword)
-	}
-	return args.Error(1)
 }
