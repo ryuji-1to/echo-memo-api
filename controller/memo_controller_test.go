@@ -308,6 +308,7 @@ func TestDeleteMemo_Error(t *testing.T) {
 func createMockContext(req *http.Request, rec *httptest.ResponseRecorder) echo.Context {
 	e := echo.New()
 	mockContext := e.NewContext(req, rec)
+	mockContext.Set("csrf", "test_csrf_token")
 	mockContext.Set("user", &jwt.Token{
 		Claims: jwt.MapClaims{
 			"user_id": float64(1),
