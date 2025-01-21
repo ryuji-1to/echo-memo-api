@@ -14,7 +14,7 @@ func TestGetUserByEmail(t *testing.T) {
 	user := model.User{}
 	const email = "testuser1@example.com"
 	err := repository.GetUserByEmail(&user, email)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, email, user.Email)
 }
 
@@ -27,10 +27,10 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	err := repository.CreateUser(&input)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 
 	createdUser := model.User{}
 	err = repository.GetUserByEmail(&createdUser, input.Email)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, input.Email, createdUser.Email)
 }

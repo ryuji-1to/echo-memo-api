@@ -15,7 +15,7 @@ func TestGetAllMemos(t *testing.T) {
 	result := []model.Memo{}
 	const userId = uint(1)
 	err := repository.GetAllMemos(&result, userId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, 2, len(result))
 }
 
@@ -29,7 +29,7 @@ func TestGetMemoById(t *testing.T) {
 		memoId = uint(1)
 	)
 	err := repository.GetMemoById(&result, userId, memoId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, userId, (result.UserId))
 	assert.Equal(t, memoId, (result.ID))
 }
@@ -51,7 +51,7 @@ func TestCreateMemo(t *testing.T) {
 	assert.Equal(t, nil, err)
 	createdMemo := model.Memo{}
 	err = repository.GetMemoById(&createdMemo, userId, memoId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, memoId, createdMemo.ID)
 	assert.Equal(t, userId, createdMemo.UserId)
 }
@@ -72,7 +72,7 @@ func TestUpdateMemo(t *testing.T) {
 	assert.Equal(t, nil, err)
 	updatedMemo := model.Memo{}
 	err = repository.GetMemoById(&updatedMemo, userId, memoId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	assert.Equal(t, memoId, updatedMemo.ID)
 	assert.Equal(t, updateMemo.Title, updatedMemo.Title)
 	assert.Equal(t, updateMemo.Content, updatedMemo.Content)
@@ -80,14 +80,13 @@ func TestUpdateMemo(t *testing.T) {
 
 func TestDeleteMemo(t *testing.T) {
 	db := testHelpers.SetupTestData()
-
 	repository := NewMemoRepository(db)
 	const (
 		userId = uint(1)
 		memoId = uint(1)
 	)
 	err := repository.DeleteMemo(userId, memoId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	err = repository.DeleteMemo(userId, memoId)
 	assert.Equal(t, "object does not exist", err.Error())
 }
