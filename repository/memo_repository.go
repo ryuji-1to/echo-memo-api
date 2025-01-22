@@ -46,7 +46,10 @@ func (mr *memoRepository) CreateMemo(memo *model.Memo) error {
 }
 
 func (mr *memoRepository) UpdateMemo(memo *model.Memo, userId uint, memoId uint) error {
-	result := mr.db.Model(memo).Clauses(clause.Returning{}).Where("id = ? AND user_id = ?", memoId, userId).Update("title", memo.Title)
+	result := mr.db.Model(memo).
+		Clauses(clause.Returning{}).
+		Where("id = ? AND user_id = ?", memoId, userId).
+		Updates(model.Memo{Title: memo.Title, Content: memo.Content})
 	if result.Error != nil {
 		return result.Error
 	}

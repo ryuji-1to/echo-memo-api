@@ -60,22 +60,22 @@ func TestUpdateMemo(t *testing.T) {
 	db := testHelpers.SetupTestData()
 
 	repository := NewMemoRepository(db)
-	updateMemo := model.Memo{
-		Title:   "updated memo1 title",
-		Content: "updated memo1 content",
-	}
 	const (
 		userId = uint(1)
 		memoId = uint(1)
 	)
+	updateMemo := model.Memo{
+		Title:   "updated memo1 title",
+		Content: "updated memo1 content",
+	}
 	err := repository.UpdateMemo(&updateMemo, userId, memoId)
-	assert.Equal(t, nil, err)
+	assert.Nil(t, err)
 	updatedMemo := model.Memo{}
 	err = repository.GetMemoById(&updatedMemo, userId, memoId)
 	assert.Nil(t, err)
 	assert.Equal(t, memoId, updatedMemo.ID)
-	assert.Equal(t, updateMemo.Title, updatedMemo.Title)
-	assert.Equal(t, updateMemo.Content, updatedMemo.Content)
+	assert.Equal(t, updateMemo.Title, "updated memo1 title")
+	assert.Equal(t, updateMemo.Content, "updated memo1 content")
 }
 
 func TestDeleteMemo(t *testing.T) {
