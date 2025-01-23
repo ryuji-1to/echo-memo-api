@@ -25,7 +25,7 @@ func NewMemoRepository(db *gorm.DB) IMemoRepository {
 }
 
 func (mr *memoRepository) GetAllMemos(memos *[]model.Memo, userId uint) error {
-	if err := mr.db.Joins("User").Where("user_id = ?", userId).Order("memos.created_at").Find(memos).Error; err != nil {
+	if err := mr.db.Joins("User").Where("user_id = ?", userId).Order("memos.created_at desc").Find(memos).Error; err != nil {
 		return err
 	}
 	return nil
